@@ -1,5 +1,5 @@
 <template>
-    <VApp>
+    <VApp class="hide-scroll">
         <TheHeader></TheHeader>
         <TheView></TheView>
     </VApp>

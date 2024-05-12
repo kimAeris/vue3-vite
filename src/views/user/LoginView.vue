@@ -121,8 +121,32 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import AppLogo from "@/components/app/AppLogo.vue";
 import { useLocale, useTheme } from "vuetify/lib/framework.mjs";
+import { useToast } from "@/stores/toastStore";
 import { useUser } from "@/stores/userStore";
 import { storeToRefs } from "pinia";
+import { useMenu } from "@/stores/menuStore";
+import { commonCode, getCommonCodes } from "@/utils/code";
+import { dateFormatting, setLocale } from "@/utils/days";
+import dayjs from "dayjs";
+import { getLocaleCode } from "@/utils/common";
+import {
+    getUserInfo,
+    login,
+    getNotRole,
+    getUserMenu,
+    getRefreshToken,
+    changePwdNext,
+} from "@/api/common";
+import menuList from "./menuList";
+// import { sysMgmtRetrive } from "@/api/system/system";
+// import TheShopCodeMapModal from "@/components/modals/TheShopCodeMapModal.vue";
+
+import { useFeedback } from "@/stores/feedbackStore";
+// import PasswordChangeModal from "@/components/modals/PasswordChangeModal.vue";
+
+// import AppLanguageIcon from "@/components/app/AppLanguageIcon.vue";
+
+const { openFeedback } = useFeedback();
 
 const userStore = useUser();
 const { user, accessToken, shop, userSetInfo } = storeToRefs(userStore);
@@ -166,43 +190,6 @@ const passwordAttrs = (isShow) => {
     }
 };
 
-/*
-
-import {
-    getUserInfo,
-    login,
-    getNotRole,
-    getUserMenu,
-    getRefreshToken,
-    changePwdNext,
-} from "@/api/common";
-import { useToast } from "@/stores/toastStore";
-
-import { useUser } from "@/stores/userStore";
-import { storeToRefs } from "pinia";
-import { sysMgmtRetrive } from "@/api/system/system";
-import TheShopCodeMapModal from "@/components/modals/TheShopCodeMapModal.vue";
-import { useMenu } from "@/stores/menuStore";
-
-import { useFeedback } from "@/stores/feedbackStore";
-import PasswordChangeModal from "@/components/modals/PasswordChangeModal.vue";
-import { commonCode, getCommonCodes } from "@/utils/code";
-import { dateFormatting, setLocale } from "@/utils/days";
-import dayjs from "dayjs";
-import { getLocaleCode } from "@/utils/common";
-import AppLanguageIcon from "@/components/app/AppLanguageIcon.vue";
-
-
-
-
-// 비밀번호 변경 팝업
-const passwordModal = ref(false);
-const openPasswordModal = () => {
-    passwordModal.value = true;
-};
-
-
-
 // 유효성
 const idRules = [(v) => !!v || commonCode("MESSAGE", "MSG000053")]; // 아이디를 입력하세요.
 
@@ -225,19 +212,33 @@ menus.value = [];
 mainMenu.value = {};
 currentPage.value = {};
 
+// 비밀번호 변경 팝업
+const passwordModal = ref(false);
+const openPasswordModal = () => {
+    passwordModal.value = true;
+};
+
 // 모달
 const shopCodeMap = ref(false);
 
 // vuetify 테마
 const theme = useTheme();
 
-const CALL_SYSTEM_MANAGER = `${commonCode(
-    "RMS000020",
-    "LB000242"
-)} (SF기술운영팀 김현민 책임)`;
+const CALL_SYSTEM_MANAGER = "이름";
+// const CALL_SYSTEM_MANAGER = `${commonCode(
+//     "RMS000020",
+//     "LB000242"
+// )} (SF기술운영팀 김현민 책임)`;
 
 // 피드백
-const { openFeedback } = useFeedback();
+const missingPassword = async () => {
+    await openFeedback(
+        "primary",
+        commonCode("MESSAGE", "MSG000092"), // 분실 문의
+        `${CALL_SYSTEM_MANAGER}`,
+        commonCode("RMS000020", "LB000137") // 확인
+    );
+};
 
 const authentication = async () => {
     try {
@@ -246,7 +247,15 @@ const authentication = async () => {
 
         loading.value = true;
 
-        const loginResponse = await login(id.value, password.value);
+        // 로그인 성공시 response
+        const loginResponse = {
+            // await login(id.value, password.value);
+            returnCode: 0,
+            datetime: "2024/05/12일 19:19:50",
+            returnMessage: "Success",
+            accessToken:
+                "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZXY1IiwiaWF0IjoxNzE1NTA5MTkwfQ.GBxTx-sZ5sICZKNrFmYe-7nXaIlsPZi6jNDf7wfBPW4",
+        };
         accessToken.value = loginResponse.accessToken;
 
         localStorage.setItem(
@@ -356,12 +365,12 @@ const loginHandler = async () => {
                     );
                 }
 
-                const menuData = await getUserMenu(
-                    shopCode,
-                    roleId,
-                    userInfo.lang_cd
-                );
-
+                // const menuData = await getUserMenu(
+                //     shopCode,
+                //     roleId,
+                //     userInfo.lang_cd
+                // );
+                const menuData = menuList.data;
                 menus.value = menuData;
                 mainMenu.value = menuData[0];
 
@@ -385,13 +394,11 @@ const loginHandler = async () => {
     }
 };
 
-const missingPassword = async () => {
-    await openFeedback(
-        "primary",
-        commonCode("MESSAGE", "MSG000092"), // 분실 문의
-        `${CALL_SYSTEM_MANAGER}`,
-        commonCode("RMS000020", "LB000137") // 확인
-    );
-};
+/*
+
+
+
+
+
 */
 </script>
