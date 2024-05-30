@@ -1,0 +1,97 @@
+// vuetify 기본 설정
+@use "vuetify" with (
+    // 전역 폰트 설정
+    $font-size-root: 20px,
+    $body-font-family: ("Spoqa Han Sans Neo", "Noto Sans KR", sans-serif)
+);
+
+// 데이트피커 날짜버튼 사이즈. 폰트 사이즈 변경한다면 수정 필요
+.v-date-picker-month__day-btn {
+    width: 40px !important;
+}
+
+// 일반버튼 기본 텍스트 색 변경
+.v-btn--variant-outlined > span > i {
+    color: rgb(var(--v-theme-on-surface));
+}
+
+// 일반 버튼 테두리
+.v-btn--variant-outlined {
+    border-color: rgba(var(--v-border-color), 0.38);
+}
+
+.v-selection-control--dirty .v-switch__track {
+    color: rgb(var(--v-theme-primary)) !important;
+    opacity: 1 !important;
+}
+
+.v-selection-control--dirty .v-switch__thumb {
+    background: rgb(var(--v-theme-on-primary)) !important;
+}
+
+// 테이블 안쪽 solo필드 패딩 사이즈 조절
+.v-data-table td .v-field.v-field--variant-outlined .v-field__input {
+    padding-inline-start: 8px;
+    padding-inline-end: 8px;
+}
+
+.v-data-table {
+    border: thin solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
+    overflow: hidden;
+    border-radius: 8px !important;
+
+    // 체크박스 전체선택 컬러
+    thead tr .v-selection-control--dirty .v-selection-control__wrapper {
+        color: rgb(var(--v-theme-on-primary)) !important;
+    }
+
+    thead tr > * {
+        background-color: rgb(var(--v-theme-primary)) !important;
+        color: rgb(var(--v-theme-on-primary)) !important;
+    }
+
+    th {
+        border: 0.5px solid
+            rgba(var(--v-theme-on-primary), var(--v-border-opacity)) !important;
+    }
+
+    td:not(:only-child) {
+        border: 0.5px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
+    }
+}
+
+.v-table__wrapper {
+    overflow: inherit;
+}
+
+.v-pagination__list {
+    li {
+        margin: 0 0.2rem;
+    }
+}
+
+.v-skeleton-loader__image {
+    height: inherit !important;
+}
+
+.v-select__selection {
+    margin: 0 !important;
+}
+
+.v-picker-title {
+    display: none !important;
+}
+
+.app-time-picker > .v-overlay__content,
+.drop-dwon-number-pad > .v-overlay__content {
+    min-width: fit-content !important;
+}
+
+.v-switch__track {
+    background-color: rgb(var(--v-theme-primary));
+}
+
+.v-badge__badge {
+    height: 1rem;
+    font-size: 12.5px !important;
+}

@@ -1,0 +1,83 @@
+@forward "vuetify-customize.scss";
+
+// 태그 전역설정
+html,
+body {
+    -ms-overflow-style: none !important; // 익스플로어
+    scrollbar-width: none !important; // 파폭
+}
+
+// 크롬 등 기타
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none !important;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+h1 {
+    @extend .text-h1;
+}
+
+h2 {
+    @extend .text-h1;
+}
+
+h3 {
+    @extend .text-h3;
+}
+
+h4 {
+    @extend .text-h4;
+}
+
+h5 {
+    @extend .text-h5;
+}
+
+h6 {
+    @extend .text-h6;
+}
+
+p,
+span,
+input {
+    @extend .text-body-1;
+}
+
+label {
+    @extend .text-body-2;
+}
+
+.v-messages {
+    @extend .text-caption;
+}
+
+// datepicker의 클래스에 vuetify의 클래스를 상속 시키기 위해 분리
+.dp__menu_index {
+    @extend .elevation-5, .py-3, .px-2;
+    overflow: hidden;
+}
+
+.text-link {
+    color: rgb(var(--v-theme-secondary));
+
+    &:hover {
+        color: rgb(var(--v-theme-primary));
+        transition: 0.2s ease-in-out;
+        cursor: pointer;
+    }
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
+
+.circle-division {
+    opacity: var(--v-border-opacity);
+}
