@@ -1,0 +1,129 @@
+image: harbor.hmc.co.kr/ict_common/cicd-alpine:v0.0.3
+
+stages:
+  - build
+  - deploy
+
+##################### Vue Build #####################
+vue:build:dev:
+  stage: build
+  image: node:18.14.2
+  tags:
+    - docker
+  cache:
+    key:
+      files:
+        - yarn.lock
+      prefix: yarn
+    paths:
+      - node_modules/
+  only:
+    - dev
+  script:
+    - yarn
+    - yarn build --mode development
+    - cp -a dist/. public/
+  artifacts:
+    paths:
+      - public
+
+vue:build:staging:
+  stage: build
+  image: node:18.14.2
+  tags:
+    - docker
+  cache:
+    key:
+      files:
+        - yarn.lock
+      prefix: yarn
+    paths:
+      - node_modules/
+  only:
+    - staging
+  script:
+    - yarn
+    - yarn build --mode staging
+    - cp -a dist/. public/
+  artifacts:
+    paths:
+      - public
+
+vue:build:master:
+  stage: build
+  image: node:18.14.2
+  tags:
+    - docker
+  cache:
+    key:
+      files:
+        - yarn.lock
+      prefix: yarn
+    paths:
+      - node_modules/
+  only:
+    - master
+  script:
+    - yarn
+    - yarn build
+    - cp -a dist/. public/
+  artifacts:
+    paths:
+      - public
+
+###################### Document ######################
+vm_document:deploy:dev:
+  stage: deploy
+  tags:
+    - docker
+  only:
+    - dev
+  needs:
+    - vue:build:dev
+  script:
+    - echo "deploy to $TARGET_DIRECTORY"
+    - |
+      for SERVER in ${DEPLOY_SERVERS}
+      do
+          echo `rsync -avr --delete -e "sshpass -p $TARGET_SYSTEM_PASSWORD ssh -p $TARGET_SSH_PORT -l $TARGET_SYSTEM_USER -o StrictHostKeyChecking=no" ./public/ "${SERVER}":"$TARGET_DIRECTORY"`
+          echo `sshpass -p $TARGET_SYSTEM_PASSWORD ssh $TARGET_SYSTEM_USER@"${SERVER}" "ls -al $TARGET_DIRECTORY"`
+      done
+
+vm_document:deploy:staging:
+  stage: deploy
+  tags:
+    - docker
+  only:
+    - staging
+  needs:
+    - vue:build:staging
+  script:
+    - echo "deploy to $TARGET_DIRECTORY_STAGING"
+    - |
+      for SERVER in ${DEPLOY_SERVERS_STAGING}
+      do
+          echo `rsync -avr --delete -e "sshpass -p $TARGET_SYSTEM_PASSWORD_STAGING ssh -p $TARGET_SSH_PORT -l $TARGET_SYSTEM_USER_STAGING -o StrictHostKeyChecking=no" ./public/ "${SERVER}":"$TARGET_DIRECTORY_STAGING"`
+          echo `sshpass -p $TARGET_SYSTEM_PASSWORD_STAGING ssh $TARGET_SYSTEM_USER_STAGING@"${SERVER}" "ls -al $TARGET_DIRECTORY_STAGING"`
+      done
+
+vm_document:deploy:master:
+  stage: deploy
+  tags:
+    - docker
+  only:
+    - master
+  needs:
+    - vue:build:master
+  script:
+    - echo "deploy to $TARGET_DIRECTORY"
+    - |
+      for SERVER in ${DEPLOY_SERVERS_MASTER}
+      do
+          echo `rsync -avr --delete -e "sshpass -p $TARGET_SYSTEM_PASSWORD_MASTER ssh -p $TARGET_SSH_PORT -l $TARGET_SYSTEM_USER_MASTER -o StrictHostKeyChecking=no" ./public/ "${SERVER}":"$TARGET_DIRECTORY_MASTER"`
+          echo `sshpass -p $TARGET_SYSTEM_PASSWORD_MASTER ssh $TARGET_SYSTEM_USER_MASTER@"${SERVER}" "ls -al $TARGET_DIRECTORY_MASTER"`
+      done
+      for SERVER2 in ${DEPLOY_SERVERS_MASTER2}
+      do
+          echo `rsync -avr --delete -e "sshpass -p $TARGET_SYSTEM_PASSWORD_MASTER ssh -p $TARGET_SSH_PORT -l $TARGET_SYSTEM_USER_MASTER -o StrictHostKeyChecking=no" ./public/ "${SERVER2}":"$TARGET_DIRECTORY_MASTER"`
+          echo `sshpass -p $TARGET_SYSTEM_PASSWORD_MASTER ssh $TARGET_SYSTEM_USER_MASTER@"${SERVER2}" "ls -al $TARGET_DIRECTORY_MASTER"`
+      done
