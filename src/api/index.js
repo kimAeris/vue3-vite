@@ -9,7 +9,7 @@ import { commonCode } from "@/utils/code";
 
 const LAST_ACTION_KEY = "lastAction";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const API = import.meta.env.VITE_API;
 
 const getBaseCodes = () => {
     const menuStore = useMenu();
@@ -34,7 +34,7 @@ const kick = () => {
 
     if (userStore.user.user_id) {
         axios.post(
-            `${BASE_URL}/logout`,
+            `${API}/logout`,
             {
                 user_id: userStore.user.user_id,
             },
@@ -60,7 +60,7 @@ const kick = () => {
 
 const create = (baseURL, options) => {
     const instance = axios.create({
-        baseURL,
+        baseURL: `${API}${baseURL}`,
         ...options,
         withCredentials: true,
     });
@@ -101,8 +101,8 @@ const create = (baseURL, options) => {
 
                 // 메뉴코드 추가
                 if (
-                    req.url !== "/system/S3/upload" &&
-                    req.url !== "/system/S3/download" &&
+                    req.url !== "/S3/upload" &&
+                    req.url !== "/S3/download" &&
                     req.url !== "/file/download" &&
                     req.url !== "/file/upload"
                 ) {
@@ -114,8 +114,8 @@ const create = (baseURL, options) => {
                         }
 
                         req.params = {
-                            ...req.params,
                             ...baseCodes,
+                            ...req.params,
                         };
                     } else if (req.method === "post") {
                         if (typeof req.data === "string") {
@@ -123,8 +123,8 @@ const create = (baseURL, options) => {
                         }
 
                         req.data = {
-                            ...req.data,
                             ...baseCodes,
+                            ...req.data,
                         };
                     }
                 }
@@ -165,7 +165,7 @@ const create = (baseURL, options) => {
                 try {
                     const {
                         data: { accessToken },
-                    } = await axios.post(`${BASE_URL}/refreshToken`);
+                    } = await axios.post(`${API}/refreshToken`);
 
                     if (accessToken) {
                         const userStore = useUser();
@@ -208,29 +208,33 @@ const create = (baseURL, options) => {
     return instance;
 };
 
-export const common = create(`${BASE_URL}`);
+export const common = create("/");
 
-export const status = create(`${BASE_URL}/status`);
+export const status = create("/status");
 
-export const routine = create(`${BASE_URL}/res`);
+export const routine = create("/res");
 
-export const subsidiary = create(`${BASE_URL}/smmInpsRes`);
+export const subsidiary = create("/smmInpsRes");
 
-export const dpu = create(`${BASE_URL}/dpuInspRes`);
+export const dpu = create("/dpuInspRes");
 
-export const cleaning = create(`${BASE_URL}/cleaning`);
+export const cleaning = create("/cleaning");
 
-export const bdm = create(`${BASE_URL}/bdm`);
+export const bdm = create("/bdm");
 
-export const system = create(`${BASE_URL}/system`);
+export const system = create("/system");
+
+export const quality = create("/paint/quality");
+
+export const qualityJournal = create("/paint/quality/journal");
+
+export const qualityOverview = create("/paint/quality/overview");
 
 /************* 차체 *************/
-export const bdCommon = create(`${BASE_URL}/body/common`);
+export const bdCommon = create("/body/common");
 
-export const bdBdm = create(`${BASE_URL}/body/standard`);
+export const bdBdm = create("/body/standard");
 
-export const journalStd = create(`${BASE_URL}/body/journal/cc/std`);
+export const bdJournal = create("/body/journal");
 
-export const journalInquiry = create(`${BASE_URL}/body/journal/cc/inquiry`);
-
-export const journalRes = create(`${BASE_URL}/body/journal/cc/res`);
+export const overview = create("/body/overview");
