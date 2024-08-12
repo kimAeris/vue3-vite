@@ -1,11 +1,8 @@
-import { createRouter, createWebHashHistory } from "vue-router";
-import user from "./user";
-import { useToast } from "@/stores/toastStore";
-import { useMenu } from "@/stores/menuStore";
-import { useUser } from "@/stores/userStore";
-import system from "./system";
-// import body from "./bd";
-// import paint from "./pt";
+import dayjs from "dayjs";
+
+import { getCurrentShopDate, logout, refreshToken } from "@/api/common";
+import { getNewNoticeCount } from "@/api/system/notice";
+import { useMenu, useToast, useUser } from "@/store";
 import {
     checkBodyFetchNecessity,
     checkFetchNecessity,
@@ -14,51 +11,72 @@ import {
     getCommonCodes,
 } from "@/utils/code";
 import { getLocaleCode, resetUserAndMenuStores } from "@/utils/common";
-import { logout, refreshToken } from "@/api/common";
-// import { getNewNoticeCount } from "@/api/system/notice";
 
-const routes = [
-    // 공통
-    ...user,
-    ...system,
-];
-
-const router = createRouter({
-    history: createWebHashHistory("/"),
-    routes,
-});
-
+// 스토어에 메뉴 정보 못 찾은 경우
 const kick = (id, token) => {
-    // 스토어에 메뉴 정보 못 찾은 경우
     if (id && token) logout(id);
     resetUserAndMenuStores();
     return "/user/login";
 };
 
-router.beforeEach(async (to, from) => {
-    const userStore = useUser();
-
-    // 다국어 변경유무 체크
+// 다국어 변경유무 체크
+const checkCommonCode = async (path) => {
     const languageCode = getLocaleCode();
 
     const isFetchNecessity = await checkFetchNecessity(languageCode);
     if (isFetchNecessity) await getCommonCodes(languageCode);
 
-    // 차체 공통코드 따로 가져옴
-    if (to.path.startsWith("/body/")) {
+    if (path.startsWith("/body/")) {
         const isBodyFetchNecessity = await checkBodyFetchNecessity(
             languageCode
         );
         if (isBodyFetchNecessity) await getBodyCommonCodes(languageCode);
     }
+};
 
-    // 토큰 유무에 따라 로그인 페이지 진입 제어
+// 공지사항 카운트 업데이트
+const setNoti = async (userStore) => {
+    try {
+        if (userStore.user?.role.length < 1) return;
+
+        const count = await getNewNoticeCount(userStore.userSetInfo.user_id);
+        userStore.newNoticeCount = count;
+    } catch (error) {
+        if (import.meta.env.DEV) console.error(error);
+    }
+};
+
+const setWorkDate = async (userStore) => {
+    const now = dayjs();
+
+    if (
+        now.format("YYYY-MM-DD HH") !== userStore.shopDate.lastCheck ||
+        userStore.shopDate.shop !== userStore.shop.shop_cd ||
+        !userStore.shopDate.date
+    ) {
+        userStore.shopDate.lastCheck = now.format("YYYY-MM-DD HH");
+        userStore.shopDate.shop = userStore.shop.shop_cd;
+
+        try {
+            userStore.shopDate.date = await getCurrentShopDate();
+        } catch (error) {
+            if (import.meta.env.DEV) console.error(error);
+            userStore.shopDate.date = now.format("YYYY-MM-DD");
+        }
+    }
+};
+
+// 토큰 유무에 따라 로그인 페이지 진입 제어
+const checkAuth = async (from, to, userStore) => {
     let accessToken = userStore.accessToken;
     const id = userStore.user.user_id;
-    const LOGIN_PATHS = ["/user/login", "/user/login/sso"];
-    const { newToast } = useToast();
-    const menuStore = useMenu();
 
+    const LOGIN_PATHS = ["/user/login"];
+    const COMMON_PATHS = ["/error"];
+
+    const { newToast } = useToast();
+
+    const menuStore = useMenu();
     // 메뉴스토어의 첫 화면
     const firstMenu = menuStore.flatMenus.find((menu) => !!menu?.pgm_path_adr);
     const firstMenuPath = firstMenu?.pgm_path_adr;
@@ -73,7 +91,11 @@ router.beforeEach(async (to, from) => {
     }
 
     // 토큰 없는데 다른 라우터 접근 시도
-    if (!LOGIN_PATHS.includes(to.path) && !accessToken) {
+    if (
+        !LOGIN_PATHS.includes(to.path) &&
+        !COMMON_PATHS.includes(to.path) &&
+        !accessToken
+    ) {
         try {
             const tokenData = await refreshToken();
             userStore.accessToken = accessToken = tokenData?.accessToken;
@@ -100,38 +122,15 @@ router.beforeEach(async (to, from) => {
 
         return false;
     }
+};
 
-    // 관리자 페이지 접근 제한
-    if (
-        menuStore.accessibleRoutes.includes(to.path) &&
-        menuStore.ADMIN_ROUTES.includes(to.path)
-    ) {
-        const adminRoles = ["ROL000000", "ROL000002"];
-        const hasAdminRole = !!userStore.user.role?.find(({ role_id }) =>
-            adminRoles.includes(role_id)
-        );
+export default async (to, from) => {
+    const userStore = useUser();
 
-        if (!hasAdminRole) {
-            newToast(commonCode("MESSAGE", "MSG000064"), "warning"); // 접근 권한이 없습니다
-            if (!from?.name) {
-                if (firstMenuPath) return firstMenuPath;
-                return kick(id, accessToken);
-            }
-            return false;
-        }
-    }
-
-    // 공지사항 카운트 업데이트
-    // if (accessToken) {
-    //     try {
-    //         const count = await getNewNoticeCount(
-    //             userStore.userSetInfo.user_id
-    //         );
-    //         userStore.newNoticeCount = count;
-    //     } catch (error) {
-    //         if (import.meta.env.DEV) console.error(error);
-    //     }
-    // }
-});
-
-export default router;
+    await checkCommonCode(to.path);
+    const next = await checkAuth(from, to, userStore);
+    if (userStore.accessToken) await setNoti(userStore);
+    if (userStore.accessToken && userStore.shop.shop_cd)
+        await setWorkDate(userStore);
+    return next;
+};
