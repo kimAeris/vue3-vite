@@ -1,5 +1,5 @@
 import "@mdi/font/css/materialdesignicons.css";
-import "@/scss/main.scss";
+import "@/styles/main.scss";
 import { createVuetify } from "vuetify";
 import { md3 } from "vuetify/blueprints";
 import theme from "@/plugins/vuetify/config/theme";
